@@ -502,6 +502,13 @@ export const ChatSidebar: React.FC = () => {
   const hasUserFilter = filters.userFilters.length > 0;
   const waitingCount = counters?.waiting ?? 0;
   const openCount = counters?.open ?? 0;
+  const closedCount = counters?.closed ?? 0;
+  const groupsCount = normalizedConversationType === "groups" ? conversations.length : 0;
+  const totalUnread =
+    (unreadByStatus.open ?? 0) +
+    (unreadByStatus.waiting ?? 0) +
+    (unreadByStatus.closed ?? 0) +
+    (unreadByStatus.expired ?? 0);
   const activeSectorCount = filters.sectorFilters.length;
   const waitingUnread = unreadByStatus.waiting ?? 0;
   const openUnread = unreadByStatus.open ?? 0;
@@ -641,6 +648,64 @@ export const ChatSidebar: React.FC = () => {
             onApply={handleUserApply}
           />
         )}
+
+        <div className="px-2 md:px-4 pb-2">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-white p-1.5">
+            <button
+              type="button"
+              onClick={() => setStatusFilters(["open"])}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("open")
+                  ? "bg-emerald-100 text-emerald-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Abertos</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {openCount}
+                </span>
+                {totalUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {totalUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleConversationTypeChange("groups")}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                normalizedConversationType === "groups"
+                  ? "bg-blue-100 text-blue-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Grupos</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {groupsCount}
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilters(["closed"])}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("closed")
+                  ? "bg-orange-100 text-orange-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Finaliz.</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {closedCount}
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
 
         <div className="px-2 md:px-4 pb-2">
           <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-gray-50 p-1.5">
