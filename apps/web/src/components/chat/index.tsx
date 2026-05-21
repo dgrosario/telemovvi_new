@@ -136,7 +136,7 @@ export function Chat(props: Props) {
   return (
     <MediaCacheProvider>
       <AudioPlayerProvider>
-        <div className="flex h-full min-h-dvh w-full min-w-0 overflow-hidden rounded-none">
+        <div className="flex h-full min-h-dvh w-full min-w-0 overflow-hidden rounded-none bg-slate-100/30">
           <ErrorBoundary>
             <ChatSidebar />
           </ErrorBoundary>
@@ -153,7 +153,7 @@ export function Chat(props: Props) {
             `}
             style={{ touchAction: "pan-y" }}
           >
-            <div className="shrink-0">
+            <div className="sticky top-0 z-20 shrink-0 border-b bg-white/95 backdrop-blur">
               <ChatHeader
                 conversation={retrieveConversationAction.data}
                 isLoading={retrieveConversationAction.isPending}
@@ -164,7 +164,7 @@ export function Chat(props: Props) {
               <div
                 ref={containerMessages}
                 id="container-messages"
-                className="w-full overflow-y-auto overflow-x-hidden flex-1 flex flex-col"
+                className="w-full overflow-y-auto overflow-x-hidden flex-1 flex flex-col px-2 md:px-4"
                 style={{
                   WebkitOverflowScrolling: "touch",
                   overscrollBehaviorX: "contain",
@@ -185,7 +185,7 @@ export function Chat(props: Props) {
               </div>
             </div>
             <div
-              className="shrink-0 px-2 md:px-3 pb-3 md:pb-3 pt-2 bg-white pb-safe"
+              className="sticky bottom-0 z-20 shrink-0 px-2 md:px-4 pb-3 pt-2 border-t bg-white/95 backdrop-blur pb-safe"
               style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
             >
               <ChatForm

@@ -206,6 +206,23 @@ export const ChatForm = forwardRef<SlashTextareaRef, Props>(({ conversation, isI
     <div className="w-full relative">
       <InstagramExpirationAlert conversation={conversation} />
 
+      {!inRecording && !isInternal && (
+        <div className="mb-2 flex items-center gap-1.5 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50/80 px-2 py-1.5">
+          <button type="button" onClick={handleOpenAttachMenu} disabled={disabled} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-white disabled:opacity-50" aria-label="Anexar">
+            <FolderOpen className="size-4" />
+          </button>
+          <button type="button" onClick={handleOpenQuickMessages} disabled={disabled} className="hidden md:inline-flex h-8 w-8 items-center justify-center rounded-lg text-blue-600 hover:bg-white disabled:opacity-50" aria-label="Mensagens rápidas">
+            <MessageSquare className="size-4" />
+          </button>
+          <button type="button" onClick={handleOpenFlows} disabled={disabled} className="hidden md:inline-flex h-8 w-8 items-center justify-center rounded-lg text-purple-600 hover:bg-white disabled:opacity-50" aria-label="Fluxos">
+            <Zap className="size-4" />
+          </button>
+          <button type="button" onClick={handleOpenCalculator} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-white" aria-label="Calculadora">
+            <Calculator className="size-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-end gap-2">
         {/* Botão + fora da caixa - esconde quando está gravando */}
         <FileButton
@@ -219,7 +236,7 @@ export const ChatForm = forwardRef<SlashTextareaRef, Props>(({ conversation, isI
           <IconButton
             size="small"
             onClick={handleOpenAttachMenu}
-            className="hover:bg-gray-100 mb-2"
+            className="hover:bg-gray-100 mb-2" aria-label="Mais ações"
             disabled={disabled || inRecording}
           >
             <Plus className="size-5 text-gray-600" />
@@ -229,7 +246,7 @@ export const ChatForm = forwardRef<SlashTextareaRef, Props>(({ conversation, isI
         {/* Caixa branca com o textarea - esconde quando está gravando */}
         <div
           data-hidden={disabled}
-          className={`data-[hidden=true]:hidden shadow-md min-h-[44px] flex flex-col bg-[#FFFFFF] rounded-2xl p-2 relative flex-1 transition-all duration-300 ${
+          className={`data-[hidden=true]:hidden shadow-sm min-h-[44px] flex flex-col bg-[#FFFFFF] rounded-2xl border border-slate-200 p-2 relative flex-1 transition-all duration-300 ${
             inRecording ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
           }`}
         >

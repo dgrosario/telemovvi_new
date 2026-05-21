@@ -717,13 +717,19 @@ const SlashTextarea = forwardRef<SlashTextareaRef, Props>((props, ref) => {
           </button>
         )}
         <div className="relative flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-end gap-2 rounded-xl bg-slate-50 px-2 py-1.5">
+            <div className="shrink-0">
+              <EmojiPickerButton
+                onEmojiSelect={handleEmojiSelect}
+                disabled={disabled || isSending}
+              />
+            </div>
             <textarea
               ref={textareaRef}
               value={value}
               rows={1}
               data-hidden={inRecording}
-              className={`chat-textarea resize-none outline-none flex-1 ${
+              className={`chat-textarea resize-none outline-none flex-1 bg-transparent text-sm leading-5 max-h-[140px] overflow-y-auto ${
                 isWhatsappTemplateSelected ? "opacity-80 cursor-not-allowed" : ""
               }`}
               placeholder={placeholder ?? (isInternal ? "Digite sua mensagem interna" : isWhatsAppGroup ? "Digite sua mensagem para o grupo" : "Digite sua mensagem")}
@@ -734,13 +740,6 @@ const SlashTextarea = forwardRef<SlashTextareaRef, Props>((props, ref) => {
               disabled={!isInternal && isWhatsappTemplateSelected}
             />
             
-            {/* Desktop: Mostrar emoji picker sempre */}
-            <div className="hidden md:block">
-              <EmojiPickerButton
-                onEmojiSelect={handleEmojiSelect}
-                disabled={disabled || isSending}
-              />
-            </div>
             
             {/* Desktop: Mostrar quick messages e flows inline */}
             {!isInternal && !hasContent && (
