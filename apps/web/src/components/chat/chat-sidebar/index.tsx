@@ -500,6 +500,18 @@ export const ChatSidebar: React.FC = () => {
 
   const hasSectorFilter = filters.sectorFilters.length > 0;
   const hasUserFilter = filters.userFilters.length > 0;
+  const waitingCount = counters?.waiting ?? 0;
+  const openCount = counters?.open ?? 0;
+  const closedCount = counters?.closed ?? 0;
+  const groupsCount = normalizedConversationType === "groups" ? conversations.length : 0;
+  const totalUnread =
+    (unreadByStatus.open ?? 0) +
+    (unreadByStatus.waiting ?? 0) +
+    (unreadByStatus.closed ?? 0) +
+    (unreadByStatus.expired ?? 0);
+  const activeSectorCount = filters.sectorFilters.length;
+  const waitingUnread = unreadByStatus.waiting ?? 0;
+  const openUnread = unreadByStatus.open ?? 0;
 
   const showSkeleton = isLoading && conversations.length === 0;
 
@@ -637,6 +649,130 @@ export const ChatSidebar: React.FC = () => {
           />
         )}
 
+        <div className="px-2 md:px-4 pb-2">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-white p-1.5">
+            <button
+              type="button"
+              onClick={() => setStatusFilters(["open"])}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("open")
+                  ? "bg-emerald-100 text-emerald-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Abertos</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {openCount}
+                </span>
+                {totalUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {totalUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleConversationTypeChange("groups")}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                normalizedConversationType === "groups"
+                  ? "bg-blue-100 text-blue-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Grupos</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {groupsCount}
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilters(["closed"])}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("closed")
+                  ? "bg-orange-100 text-orange-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Finaliz.</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {closedCount}
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className="px-2 md:px-4 pb-2">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-gray-50 p-1.5">
+            <button
+              type="button"
+              onClick={() => setShowAll(false)}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                !showAll ? "bg-blue-100 text-blue-700 shadow-sm" : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Meus</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {openCount}
+                </span>
+                {openUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {openUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilters(["waiting"]);
+                setWaitingStatus("client");
+              }}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("waiting")
+                  ? "bg-amber-100 text-amber-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Em espera</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {waitingCount}
+                </span>
+                {waitingUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {waitingUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={(event) =>
+                setSectorAnchorEl(event.currentTarget as HTMLElement)
+              }
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                filters.sectorFilters.length > 0
+                  ? "bg-orange-100 text-orange-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Setor</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {activeSectorCount}
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+
         {shouldShowStatusFilters(normalizedConversationType) && (
         <div className="flex items-center gap-1 px-2 md:px-4 pt-2 mb-3 overflow-x-auto whitespace-nowrap" role="group" aria-label="filtrar conversas por status">
           {filtersList.map((f) => {
@@ -688,8 +824,8 @@ export const ChatSidebar: React.FC = () => {
                     aria-label={`${f.title} (${f.count})`}
                     aria-pressed={isSelected}
                     className={`
-                      relative flex items-center gap-1 px-2 py-1.5 rounded-lg
-                      text-xs font-medium transition-all cursor-pointer
+                      relative flex items-center gap-1 px-3 py-2 rounded-xl
+                      text-xs font-semibold transition-all cursor-pointer border
                       ${isSelected
                         ? selectedStyles[f.value]
                         : unselectedStyles[f.value]

@@ -106,7 +106,7 @@ export function ContactDetailsDrawer() {
     <Sheet open={open} onOpenChange={handleOpenChange} modal={false}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[400px] sm:max-w-[400px] p-0 flex flex-col"
+        className="w-full sm:w-[440px] sm:max-w-[440px] p-0 flex flex-col max-h-[100dvh]"
       >
         <SheetHeader className="sr-only">
           <SheetTitle>Detalhes do Contato</SheetTitle>
@@ -127,7 +127,7 @@ export function ContactDetailsDrawer() {
               onClose={closeContactDetails}
             />
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto bg-white">
               <ContactDetailsProfile
                 name={partnerData.name}
                 thumbnail={partnerData.contacts[0]?.thumbnail}
@@ -139,7 +139,7 @@ export function ContactDetailsDrawer() {
               <Tabs defaultValue="details" className="flex flex-col">
                 <TabsList
                   variant="line"
-                  className="px-4 shrink-0 border-b gap-4"
+                  className="px-4 shrink-0 border-b gap-4 bg-white sticky top-0 z-[1]"
                 >
                   <TabsTrigger value="details">Detalhes</TabsTrigger>
                   <TabsTrigger value="media">Mídia</TabsTrigger>

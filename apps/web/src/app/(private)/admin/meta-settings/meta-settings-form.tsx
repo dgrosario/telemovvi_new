@@ -24,6 +24,7 @@ const CHANNEL_LABELS: Record<MetaChannelType, string> = {
   whatsapp: "WhatsApp Business",
   instagram: "Instagram Business",
   messenger: "Facebook Messenger",
+  evolution: "Evolution API",
 };
 
 export function MetaSettingsForm({
@@ -31,6 +32,7 @@ export function MetaSettingsForm({
   initialSetting,
   onSettingSaved,
 }: MetaSettingsFormProps) {
+  const isEvolution = channelType === "evolution";
   const [appId, setAppId] = useState("");
   const [appSecret, setAppSecret] = useState("");
   const [configId, setConfigId] = useState("");
@@ -152,8 +154,9 @@ export function MetaSettingsForm({
             {CHANNEL_LABELS[channelType]}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Configure as credenciais do aplicativo Meta para{" "}
-            {CHANNEL_LABELS[channelType]}
+            {isEvolution
+              ? "Configure as credenciais da Evolution para integração no workspace"
+              : `Configure as credenciais do aplicativo Meta para ${CHANNEL_LABELS[channelType]}`}
           </p>
         </div>
 
@@ -174,31 +177,43 @@ export function MetaSettingsForm({
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="appId">App ID *</Label>
+          <Label htmlFor="appId">{isEvolution ? "URL da API *" : "App ID *"}</Label>
           <Input
             id="appId"
             value={appId}
             onChange={(e) => setAppId(e.target.value)}
-            placeholder="Ex: 579228267872440"
+            placeholder={
+              isEvolution
+                ? "Ex: https://evolution.seudominio.com"
+                : "Ex: 579228267872440"
+            }
             required
           />
           <p className="text-xs text-gray-500">
-            ID do aplicativo no Meta Developers
+            {isEvolution
+              ? "URL base usada para comunicação com a Evolution API"
+              : "ID do aplicativo no Meta Developers"}
           </p>
         </div>
 
         {channelType !== "instagram" && (
           <div className="space-y-2">
-            <Label htmlFor="configId">Config ID *</Label>
+            <Label htmlFor="configId">
+              {isEvolution ? "Nome da Instância *" : "Config ID *"}
+            </Label>
             <Input
               id="configId"
               value={configId}
               onChange={(e) => setConfigId(e.target.value)}
-              placeholder="Ex: 1378912180505580"
+              placeholder={
+                isEvolution ? "Ex: atendimento-principal" : "Ex: 1378912180505580"
+              }
               required
             />
             <p className="text-xs text-gray-500">
-              ID da configuração de Embedded Signup
+              {isEvolution
+                ? "Identificador da instância Evolution que será usada no workspace"
+                : "ID da configuração de Embedded Signup"}
             </p>
           </div>
         )}
@@ -206,7 +221,9 @@ export function MetaSettingsForm({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="appSecret">App Secret {!initialSetting && "*"}</Label>
+          <Label htmlFor="appSecret">
+            {isEvolution ? "Token / API Key" : "App Secret"} {!initialSetting && "*"}
+          </Label>
           {initialSetting && !appSecret && (
             <Button
               type="button"
@@ -228,7 +245,9 @@ export function MetaSettingsForm({
             placeholder={
               initialSetting
                 ? "Deixe em branco para manter o atual"
-                : "App Secret do aplicativo"
+                : isEvolution
+                  ? "Token de autenticação da Evolution API"
+                  : "App Secret do aplicativo"
             }
             required={!initialSetting}
           />
@@ -242,7 +261,9 @@ export function MetaSettingsForm({
           </Button>
         </div>
         <p className="text-xs text-gray-500">
-          Secret do aplicativo no Meta Developers (mínimo 32 caracteres)
+          {isEvolution
+            ? "Token usado para autenticar chamadas na Evolution API"
+            : "Secret do aplicativo no Meta Developers (mínimo 32 caracteres)"}
         </p>
       </div>
 

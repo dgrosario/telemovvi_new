@@ -191,7 +191,11 @@ export interface MessageReactionPayload {
 }
 
 // Meta Types
-export type MetaChannelType = "whatsapp" | "instagram" | "messenger";
+export type MetaChannelType =
+  | "whatsapp"
+  | "instagram"
+  | "messenger"
+  | "evolution";
 
 export interface MetaEmbeddedLoginConfig {
   appId: string;

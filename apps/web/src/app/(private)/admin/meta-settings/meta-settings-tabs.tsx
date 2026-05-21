@@ -13,6 +13,7 @@ const CHANNEL_TABS: { type: MetaChannelType; label: string; icon: string }[] = [
   { type: "whatsapp", label: "WhatsApp", icon: "whatsapp" },
   { type: "instagram", label: "Instagram", icon: "instagram" },
   { type: "messenger", label: "Messenger", icon: "messenger" },
+  { type: "evolution", label: "Evolution", icon: "message-circle-cog" },
 ];
 
 export function MetaSettingsTabs({ initialSettings }: MetaSettingsTabsProps) {
