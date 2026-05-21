@@ -28,6 +28,30 @@ const channelType = text("type", {
 export const workspaces = pgTable("workspaces", {
   id: uuid("id").primaryKey().notNull(),
   name: text("name").notNull(),
+  tradeName: varchar("trade_name", { length: 255 }),
+  legalName: varchar("legal_name", { length: 255 }),
+  document: varchar("document", { length: 20 }),
+  phone: varchar("phone", { length: 30 }),
+  billingEmail: varchar("billing_email", { length: 255 }),
+  status: varchar("status", {
+    length: 20,
+    enum: ["active", "trial", "overdue", "suspended", "cancelled"],
+  })
+    .notNull()
+    .default("trial"),
+  currentPlanCode: varchar("current_plan_code", { length: 50 }),
+  dueDate: timestamp("due_date"),
+  domain: varchar("domain", { length: 255 }),
+  subdomain: varchar("subdomain", { length: 100 }),
+  ownerUserId: uuid("owner_user_id").references(() => users.id, {
+    onDelete: "set null",
+    onUpdate: "cascade",
+  }),
+  trialEndsAt: timestamp("trial_ends_at"),
+  suspendedAt: timestamp("suspended_at"),
+  cancelledAt: timestamp("cancelled_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const sectors = pgTable(
@@ -54,12 +78,10 @@ export const channels = pgTable(
     id: uuid("id").primaryKey().notNull(),
     name: text("name").default("").notNull(),
     payload: jsonb("payload").notNull().default({}),
-    workspaceId: uuid("workspace_id")
-      .notNull()
-      .references(() => workspaces.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     status: text("status", { enum: ["connected", "disconnected"] })
       .default("disconnected")
@@ -236,12 +258,10 @@ export const labels = pgTable(
     id: uuid("id").primaryKey().notNull(),
     name: varchar("name", { length: 100 }).notNull(),
     color: varchar("color", { length: 7 }).notNull().default("#3B82F6"),
-    workspaceId: uuid("workspace_id")
-      .notNull()
-      .references(() => workspaces.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -384,10 +404,17 @@ export const messages = pgTable(
     }),
     quotedMessageId: text("quoted_message_id"),
     remoteJid: varchar("remote_jid", { length: 255 }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
   },
   (table) => [
     index("idx_messages_conversation_id").on(table.conversationId),
     index("idx_messages_created_at").on(table.createdAt),
+    index("idx_messages_workspace_id").on(table.workspaceId),
   ]
 );
 
@@ -432,8 +459,17 @@ export const templates = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
   },
-  (table) => [index("idx_templates_channel_id").on(table.channelId)]
+  (table) => [
+    index("idx_templates_channel_id").on(table.channelId),
+    index("idx_templates_workspace_id").on(table.workspaceId),
+  ]
 );
 
 export const flows = pgTable(
@@ -595,10 +631,44 @@ export const processedMessages = pgTable(
     messageId: varchar("message_id", { length: 256 }).notNull(),
     instanceName: varchar("instance_name", { length: 255 }).notNull(),
     eventType: varchar("event_type", { length: 50 }).notNull(),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
     processedAt: timestamp("processed_at").defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.messageId, table.instanceName] })]
+  (table) => [
+    primaryKey({ columns: [table.messageId, table.instanceName] }),
+    index("idx_processed_messages_workspace_id").on(table.workspaceId),
+  ]
 );
+
+export const plans = pgTable("plans", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  code: varchar("code", { length: 40 }).notNull().unique(),
+  name: varchar("name", { length: 120 }).notNull(),
+  billingCycle: varchar("billing_cycle", { length: 20, enum: ["monthly", "yearly"] })
+    .notNull()
+    .default("monthly"),
+  value: numeric("value", { precision: 12, scale: 2 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const planFeatures = pgTable("plan_features", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  planId: uuid("plan_id").notNull().references(() => plans.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  featureKey: varchar("feature_key", { length: 80 }).notNull(),
+  featureValue: text("feature_value").notNull(),
+});
+
+export const billingCustomers = pgTable("billing_customers", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  asaasCustomerId: varchar("asaas_customer_id", { length: 120 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const systemVariables = pgTable(
   "system_variables",
