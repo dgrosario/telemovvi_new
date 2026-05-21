@@ -774,7 +774,7 @@ export const ChatSidebar: React.FC = () => {
         </div>
 
         {shouldShowStatusFilters(normalizedConversationType) && (
-        <div className="flex items-center gap-2 px-2 md:px-4 pt-1 mb-3 overflow-x-auto whitespace-nowrap" role="group" aria-label="filtrar conversas por status">
+        <div className="flex items-center gap-2 px-2 md:px-4 pt-2 mb-3 overflow-x-auto whitespace-nowrap" role="group" aria-label="filtrar conversas por status">
           {filtersList.map((f) => {
             const isSelected = statusFilters.includes(f.value);
             const unreadCount = unreadByStatus[f.value];
