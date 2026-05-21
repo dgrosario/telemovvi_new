@@ -276,6 +276,7 @@ function Sidebar({
 function SidebarTrigger({
   className,
   onClick,
+  children,
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar } = useSidebar();
@@ -292,7 +293,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <i className="tabler-menu text-white size-4" />
+      {children ?? <i className="tabler-menu size-4" />}
     </Button>
   );
 }

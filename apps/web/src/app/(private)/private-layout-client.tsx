@@ -11,6 +11,7 @@ import ModalRegisterClients from "./clients/modal-register-clients";
 import { ModalQRCodeConnect } from "@/components/modal-qrcode-connect";
 import { ContactDetailsDrawer } from "@/components/contact-details";
 import { FloatingNotificationButton } from "@/components/floating-notification-button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { User } from "@omnichannel/core/domain/entities/user";
 import { PolicyName } from "@omnichannel/core/domain/services/permissions";
 import { useEffect, useState } from "react";
@@ -50,7 +51,7 @@ export function PrivateLayoutClient({
         <VerticalNavProvider>
           <SidebarProvider>
             {isMounted && (
-              <div className="hidden md:block">
+              <div>
                 <AppSidebar
                   permissions={permissions}
                   user={user}
@@ -58,9 +59,16 @@ export function PrivateLayoutClient({
                 />
               </div>
             )}
-            <main className="w-full overflow-auto bg-[#F9FAFC]" style={{ height: '100dvh' }}>
-              {children}
-            </main>
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#F9FAFC] min-h-dvh">
+              <header className="sticky top-0 z-20 flex h-14 items-center border-b bg-white px-3 md:hidden">
+                <SidebarTrigger className="!min-w-10 !w-10 !h-10 !rounded-md !text-gray-700 hover:!bg-gray-100">
+                  <i className="tabler-menu-2 text-xl text-gray-700" />
+                </SidebarTrigger>
+              </header>
+              <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+                {children}
+              </main>
+            </div>
             <ModalRegisterClients />
             <ModalQRCodeConnect />
             <ContactDetailsDrawer />

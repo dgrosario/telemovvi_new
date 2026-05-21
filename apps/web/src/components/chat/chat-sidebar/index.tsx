@@ -511,7 +511,7 @@ export const ChatSidebar: React.FC = () => {
       className={`
         bg-white border-r flex-col w-full h-full
         ${hasOpenConversation ? "hidden" : "flex"}
-        md:flex md:min-w-[460px] md:max-w-[460px] md:flex-1
+        md:flex md:w-full lg:min-w-[420px] lg:max-w-[460px] lg:flex-1
       `}
     >
       <SidebarHeader className="gap-3.5 pt-4 pb-0 px-0 shrink-0">
@@ -638,7 +638,7 @@ export const ChatSidebar: React.FC = () => {
         )}
 
         {shouldShowStatusFilters(normalizedConversationType) && (
-        <div className="flex items-center gap-1 px-2 md:px-4 pt-2 mb-3 overflow-x-auto" role="group" aria-label="filtrar conversas por status">
+        <div className="flex items-center gap-1 px-2 md:px-4 pt-2 mb-3 overflow-x-auto whitespace-nowrap" role="group" aria-label="filtrar conversas por status">
           {filtersList.map((f) => {
             const isSelected = statusFilters.includes(f.value);
             const unreadCount = unreadByStatus[f.value];

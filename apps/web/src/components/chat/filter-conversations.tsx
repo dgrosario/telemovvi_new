@@ -51,7 +51,7 @@ export function FilterConversations({
 
       <DropdownMenuContent
         align="end"
-        className="flex flex-col gap-4 p-5 border border-gray-300 rounded-lg bg-white shadow-sm w-full min-w-[20rem] max-w-[25rem]"
+        className="flex w-[calc(100vw-2rem)] max-w-[25rem] flex-col gap-4 rounded-lg border border-gray-300 bg-white p-4 sm:p-5 shadow-sm"
       >
         {/* --- Filtro STATUS --- */}
         <div className="flex flex-col flex-1">
@@ -63,7 +63,7 @@ export function FilterConversations({
           <Autocomplete
             multiple
             disablePortal
-            className="max-w-[17rem] mt-4"
+            className="mt-4 w-full"
             hidden={!hasListAllConversations}
             options={usersList}
             value={usersList.filter((s) => users.includes(s.id))}
@@ -82,7 +82,7 @@ export function FilterConversations({
           <Autocomplete
             multiple
             disablePortal
-            className="max-w-[17rem] mt-4"
+            className="mt-4 w-full"
             options={sectorsList}
             value={sectorsList.filter((s) => sectors.includes(s.id))}
             onChange={(_, newValue) =>
@@ -100,7 +100,7 @@ export function FilterConversations({
           <Autocomplete
             multiple
             disablePortal
-            className="max-w-[17rem] mt-4"
+            className="mt-4 w-full"
             options={channelsList}
             value={channelsList.filter((s) => channels.includes(s.id))}
             onChange={(_, newValue) =>
