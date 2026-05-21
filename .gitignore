@@ -1,0 +1,11 @@
+node_modules
+.next
+dist
+build
+.env
+.env.*
+apps/web/.env
+apps/omni-gateway/.env
+apps/web/certificates
+docker-compose.yml.bkp
+.DS_Store
