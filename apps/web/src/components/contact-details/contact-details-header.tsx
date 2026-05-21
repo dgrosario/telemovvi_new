@@ -21,19 +21,19 @@ function getAcronym(name: string): string {
 
 export function ContactDetailsHeader({ name, thumbnail, value, onClose }: Props) {
   return (
-    <div className="bg-gray-50 border-b px-4 py-3 flex items-center gap-3">
-      <IconButton onClick={onClose} size="small" className="!text-gray-500 hover:!text-gray-700">
+    <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b px-4 py-3 flex items-center gap-3">
+      <IconButton onClick={onClose} size="small" className="!text-gray-500 hover:!text-gray-700 !bg-gray-100/80">
         <i className="tabler-x size-5" />
       </IconButton>
-      <span className="text-gray-800 font-medium text-sm">Dados do contato</span>
+      <span className="text-gray-900 font-semibold text-base">Dados do contato</span>
     </div>
   );
 }
 
 export function ContactDetailsProfile({ name, thumbnail, value }: Omit<Props, 'onClose'>) {
   return (
-    <div className="bg-gray-50 flex flex-col items-center py-6 px-4">
-      <Avatar className="size-20 bg-white border mb-3">
+    <div className="bg-gradient-to-b from-slate-50 to-white flex flex-col items-center py-7 px-4 border-b">
+      <Avatar className="size-24 bg-white border-2 shadow-sm mb-3">
         <AvatarImage src={thumbnail} className="object-cover" />
         <AvatarFallback className="border text-xl">
           <CustomAvatar skin="light-static" color="primary" className="size-20 text-xl">
@@ -42,11 +42,11 @@ export function ContactDetailsProfile({ name, thumbnail, value }: Omit<Props, 'o
         </AvatarFallback>
       </Avatar>
 
-      <h2 className="text-gray-900 text-lg font-semibold text-center">
+      <h2 className="text-gray-900 text-2xl font-bold text-center">
         {name}
       </h2>
       {value && (
-        <p className="text-gray-500 text-sm mt-0.5">
+        <p className="text-gray-500 text-base mt-0.5">
           {value}
         </p>
       )}

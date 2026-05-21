@@ -136,7 +136,7 @@ export function Chat(props: Props) {
   return (
     <MediaCacheProvider>
       <AudioPlayerProvider>
-        <div className="flex w-full overflow-hidden rounded-none h-full">
+        <div className="flex h-full min-h-dvh w-full min-w-0 overflow-hidden rounded-none">
           <ErrorBoundary>
             <ChatSidebar />
           </ErrorBoundary>
@@ -147,7 +147,7 @@ export function Chat(props: Props) {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             className={`
-              background relative flex-col overflow-hidden bg-[#F5F1EB]/30 gap-0 w-full flex-1 h-full
+              background relative flex-col overflow-hidden bg-[#F5F1EB]/30 gap-0 w-full min-w-0 flex-1 h-full
               ${store.conversationOpenedId ? "flex" : "hidden"}
               md:flex
             `}

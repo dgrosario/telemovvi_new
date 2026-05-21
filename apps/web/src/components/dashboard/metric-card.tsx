@@ -92,16 +92,16 @@ export function MetricCard({
   const displayValue = formatValue(value, formatType, secondaryValue);
 
   return (
-    <Card className={cn("p-4", className)}>
+    <Card className={cn("p-4 rounded-2xl border-border/70 shadow-sm", className)}>
       <div className="flex items-center gap-4">
-        <div className={cn("rounded-lg p-3", styles.bg)}>
-          <Icon icon={icon} className={cn("h-6 w-6", styles.icon)} />
+        <div className={cn("rounded-xl p-3.5 ring-1 ring-black/5", styles.bg)}>
+          <Icon icon={icon} className={cn("h-6 w-6 md:h-7 md:w-7", styles.icon)} />
         </div>
         <div className="flex flex-col">
-          <span className="text-2xl font-bold text-foreground">
+          <span className="text-2xl md:text-3xl font-bold text-foreground">
             {displayValue}
           </span>
-          <span className="text-sm text-muted-foreground">{label}</span>
+          <span className="text-sm md:text-base text-muted-foreground">{label}</span>
         </div>
       </div>
     </Card>

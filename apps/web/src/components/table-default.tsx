@@ -118,7 +118,7 @@ export function TableDefault<T extends { id: string }>({
   };
 
   return (
-    <div className="h-full flex flex-col overflow-x-auto">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden">
       <div
         data-hidden={!selectedIds.size}
         className="bg-[#F1F4F9] flex items-center gap-2 py-1.5 border-b"
@@ -175,7 +175,8 @@ export function TableDefault<T extends { id: string }>({
           </ModalConfirmDelete>
         )}
       </div>
-      <Table className="table-fixed !z-0">
+      <div className="min-w-0 overflow-x-auto">
+      <Table className="table-fixed !z-0 min-w-[720px]">
         <TableHeader className="bg-[#F1F4F9]">
           <TableRow className="hover:bg-transparent">
             {canSelect && (
@@ -291,6 +292,7 @@ export function TableDefault<T extends { id: string }>({
           )}
         </TableBody>
       </Table>
+      </div>
 
       <footer
         data-hidden={noPagination}

@@ -500,6 +500,11 @@ export const ChatSidebar: React.FC = () => {
 
   const hasSectorFilter = filters.sectorFilters.length > 0;
   const hasUserFilter = filters.userFilters.length > 0;
+  const waitingCount = counters?.waiting ?? 0;
+  const openCount = counters?.open ?? 0;
+  const activeSectorCount = filters.sectorFilters.length;
+  const waitingUnread = unreadByStatus.waiting ?? 0;
+  const openUnread = unreadByStatus.open ?? 0;
 
   const showSkeleton = isLoading && conversations.length === 0;
 
@@ -511,7 +516,7 @@ export const ChatSidebar: React.FC = () => {
       className={`
         bg-white border-r flex-col w-full h-full
         ${hasOpenConversation ? "hidden" : "flex"}
-        md:flex md:min-w-[460px] md:max-w-[460px] md:flex-1
+        md:flex md:w-full lg:min-w-[420px] lg:max-w-[460px] lg:flex-1
       `}
     >
       <SidebarHeader className="gap-3.5 pt-4 pb-0 px-0 shrink-0">
@@ -637,8 +642,74 @@ export const ChatSidebar: React.FC = () => {
           />
         )}
 
+        <div className="px-2 md:px-4 pb-2">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-gray-50 p-1.5">
+            <button
+              type="button"
+              onClick={() => setShowAll(false)}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                !showAll ? "bg-blue-100 text-blue-700 shadow-sm" : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Meus</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {openCount}
+                </span>
+                {openUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {openUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilters(["waiting"]);
+                setWaitingStatus("client");
+              }}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("waiting")
+                  ? "bg-amber-100 text-amber-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Em espera</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {waitingCount}
+                </span>
+                {waitingUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {waitingUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={(event) =>
+                setSectorAnchorEl(event.currentTarget as HTMLElement)
+              }
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                filters.sectorFilters.length > 0
+                  ? "bg-orange-100 text-orange-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Setor</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {activeSectorCount}
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+
         {shouldShowStatusFilters(normalizedConversationType) && (
-        <div className="flex items-center gap-1 px-2 md:px-4 pt-2 mb-3 overflow-x-auto" role="group" aria-label="filtrar conversas por status">
+        <div className="flex items-center gap-2 px-2 md:px-4 pt-1 mb-3 overflow-x-auto whitespace-nowrap" role="group" aria-label="filtrar conversas por status">
           {filtersList.map((f) => {
             const isSelected = statusFilters.includes(f.value);
             const unreadCount = unreadByStatus[f.value];
@@ -688,8 +759,8 @@ export const ChatSidebar: React.FC = () => {
                     aria-label={`${f.title} (${f.count})`}
                     aria-pressed={isSelected}
                     className={`
-                      relative flex items-center gap-1 px-2 py-1.5 rounded-lg
-                      text-xs font-medium transition-all cursor-pointer
+                      relative flex items-center gap-1 px-3 py-2 rounded-xl
+                      text-xs font-semibold transition-all cursor-pointer border
                       ${isSelected
                         ? selectedStyles[f.value]
                         : unselectedStyles[f.value]

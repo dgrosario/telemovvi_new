@@ -3,12 +3,12 @@ import { sendMessage } from "@/app/actions/messages";
 import { useServerActionMutation } from "@/hooks/server-action-hooks";
 import { useChat } from "@/hooks/use-chat";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
-import { canSendDocument, canSendVoiceNote } from "@/lib/channel-capabilities";
+import { canSendVoiceNote } from "@/lib/channel-capabilities";
 import { getMessagePreviewText } from "@/lib/message-utils";
 import { Conversation } from "@omnichannel/core/domain/entities/conversation";
 import { getPayloadProperty } from "@omnichannel/core/domain/entities/channel";
-import { IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tooltip } from "@mui/material";
-import { Calculator, FolderOpen, ImageIcon, Plus, Reply, X, Camera, MessageSquare, Zap, Send, Loader2, Mic } from "lucide-react";
+import { IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
+import { Calculator, FolderOpen, Plus, Reply, X, MessageSquare, Zap, Send, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { toast } from "react-toastify";
@@ -57,7 +57,6 @@ export const ChatForm = forwardRef<SlashTextareaRef, Props>(({ conversation, isI
   }));
 
   const channelType = conversation?.channel?.type;
-  const supportsDocuments = canSendDocument(channelType);
   const supportsVoiceNotes = canSendVoiceNote(channelType);
   const { hasPermission: canBypassAttendance } = usePermissionCheck([
     "bypass:attendance-to-send",
@@ -77,28 +76,8 @@ export const ChatForm = forwardRef<SlashTextareaRef, Props>(({ conversation, isI
     setAttachMenuAnchor(null);
   }, []);
 
-  const handleSelectImage = useCallback(() => {
-    fileButtonRef.current?.selectImage();
-    handleCloseAttachMenu();
-  }, [handleCloseAttachMenu]);
-
-  const handleSelectCamera = useCallback(() => {
-    fileButtonRef.current?.selectCamera();
-    handleCloseAttachMenu();
-  }, [handleCloseAttachMenu]);
-
-  const handleSelectFile = useCallback(() => {
+  const handleSelectAttachment = useCallback(() => {
     fileButtonRef.current?.selectFile();
-    handleCloseAttachMenu();
-  }, [handleCloseAttachMenu]);
-
-  const handleSelectVideo = useCallback(() => {
-    fileButtonRef.current?.selectVideo();
-    handleCloseAttachMenu();
-  }, [handleCloseAttachMenu]);
-
-  const handleSelectAudio = useCallback(() => {
-    fileButtonRef.current?.selectAudio();
     handleCloseAttachMenu();
   }, [handleCloseAttachMenu]);
 
@@ -331,82 +310,15 @@ export const ChatForm = forwardRef<SlashTextareaRef, Props>(({ conversation, isI
           horizontal: "left",
         }}
       >
-        {/* Mobile: Adicionar câmera como primeira opção */}
-        <MenuItem onClick={handleSelectCamera} className="md:hidden">
+        <MenuItem onClick={handleSelectAttachment}>
           <ListItemIcon>
-            <Camera className="size-5 text-blue-500" />
+            <FolderOpen className="size-5 text-blue-600" />
           </ListItemIcon>
-          <ListItemText>Câmera</ListItemText>
+          <ListItemText
+            primary="Anexar arquivo"
+            secondary="Imagem, vídeo, áudio ou documento"
+          />
         </MenuItem>
-        
-        <MenuItem onClick={handleSelectImage}>
-          <ListItemIcon>
-            <ImageIcon className="size-5 text-orange-500" />
-          </ListItemIcon>
-          <ListItemText>Imagem</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleSelectVideo} aria-label="Selecionar vídeo">
-          <ListItemIcon>
-            <i className="tabler-video size-5 text-purple-500" aria-hidden="true" />
-          </ListItemIcon>
-          <ListItemText>Vídeo</ListItemText>
-        </MenuItem>
-        <Tooltip
-          title={supportsVoiceNotes ? "" : "Este canal não suporta envio de áudio"}
-          placement="right"
-        >
-          <span>
-            <MenuItem
-              onClick={handleSelectAudio}
-              disabled={!supportsVoiceNotes}
-              sx={{
-                "&.Mui-disabled": {
-                  opacity: 0.5,
-                  pointerEvents: "auto",
-                },
-              }}
-            >
-              <ListItemIcon>
-                <Mic className={`size-5 ${supportsVoiceNotes ? "text-sky-600" : "text-gray-400"}`} />
-              </ListItemIcon>
-              <ListItemText
-                primary="Áudio"
-                secondary={!supportsVoiceNotes ? "Não suportado" : undefined}
-                secondaryTypographyProps={{
-                  className: "text-xs text-red-500",
-                }}
-              />
-            </MenuItem>
-          </span>
-        </Tooltip>
-        <Tooltip
-          title={supportsDocuments ? "" : "Este canal não suporta envio de documentos"}
-          placement="right"
-        >
-          <span>
-            <MenuItem
-              onClick={handleSelectFile}
-              disabled={!supportsDocuments}
-              sx={{
-                "&.Mui-disabled": {
-                  opacity: 0.5,
-                  pointerEvents: "auto",
-                },
-              }}
-            >
-              <ListItemIcon>
-                <FolderOpen className={`size-5 ${supportsDocuments ? "text-gray-600" : "text-gray-400"}`} />
-              </ListItemIcon>
-              <ListItemText
-                primary="Arquivo"
-                secondary={!supportsDocuments ? "Não suportado" : undefined}
-                secondaryTypographyProps={{
-                  className: "text-xs text-red-500",
-                }}
-              />
-            </MenuItem>
-          </span>
-        </Tooltip>
         
         {/* Mobile: Adicionar Mensagens Rápidas e Fluxos como itens do menu */}
         {!isInternal && (
