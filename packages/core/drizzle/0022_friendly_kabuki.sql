@@ -1,0 +1,1 @@
+ALTER TABLE "partner_contacts" ADD COLUMN "username" text DEFAULT '';

@@ -1,0 +1,242 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: omnichannel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: omnichannel
+      POSTGRES_USER: omnichannel
+      POSTGRES_PASSWORD: omnichannel
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - omnichannel
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U omnichannel']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: omnichannel-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-omnichannel}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-omnichannel}
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - omnichannel
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    env_file:
+      - ./apps/web/.env
+    container_name: omnichannel-web
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://omnichannel:omnichannel@postgres:5432/omnichannel
+      RABBITMQ_URL: amqp://omnichannel:omnichannel@rabbitmq:5672
+      META_RABBITMQ_URL: amqp://omnichannel:omnichannel@rabbitmq:5672
+      META_RABBITMQ_EXCHANGE: meta_exchange
+      OUTBOUND_QUEUE: outbound-messages
+      REDIS_URL: redis://redis:6379
+      OMNI_GATEWAY_URL: http://omni-gateway:3001
+      CRON_SECRET: ${CRON_SECRET:-omnichannel-cron-secret}
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./:/app:cached
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+      - /app/packages/core/node_modules
+      - /app/packages/typescript-config/node_modules
+      - /app/packages/eslint-config/node_modules
+    networks:
+      - omnichannel
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: omnichannel-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - omnichannel
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-evolution:
+    image: postgres:17-alpine
+    container_name: omnichannel-postgres-evolution
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: evolution
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: evolution
+    volumes:
+      - postgres_evolution_data:/var/lib/postgresql/data
+    networks:
+      - omnichannel
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U evolution']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  omni-gateway:
+    build:
+      context: ./apps/omni-gateway
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/omni-gateway/.env
+    container_name: omnichannel-omni-gateway
+    restart: unless-stopped
+    environment:
+      REDIS_URL: redis://redis:6379
+      MAIN_DATABASE_URL: postgres://omnichannel:omnichannel@postgres:5432/omnichannel
+      RABBITMQ_URL: amqp://omnichannel:omnichannel@rabbitmq:5672
+      EVOLUTION_URL: http://evolution:8080
+      EVOLUTION_API_KEY: omnichannel-local-key
+      EVOLUTION_RABBITMQ_URL: amqp://omnichannel:omnichannel@rabbitmq:5672
+      EVOLUTION_RABBITMQ_EXCHANGE: evolution_exchange
+      EXCHANGE_NAME: meta_exchange
+      OUTBOUND_QUEUE: outbound-messages
+      OUTBOUND_DLQ: outbound-messages.dlq
+      MEDIA_STORAGE_PATH: /data/media
+      MEDIA_AUTO_DOWNLOAD: 'true'
+    ports:
+      - '3001:3001'
+    volumes:
+      - media_data:/data/media
+    networks:
+      - omnichannel
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  evolution:
+    image: evoapicloud/evolution-api:v2.3.7
+    container_name: omnichannel-evolution
+    restart: unless-stopped
+    environment:
+      # Server
+      SERVER_URL: http://localhost:8080
+
+      # Authentication
+      AUTHENTICATION_API_KEY: omnichannel-local-key
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: true
+
+      # Database (PostgreSQL dedicated)
+      DATABASE_ENABLED: true
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:evolution@postgres-evolution:5432/evolution?schema=public
+      DATABASE_SAVE_DATA_INSTANCE: true
+      DATABASE_SAVE_DATA_NEW_MESSAGE: true
+      DATABASE_SAVE_DATA_MESSAGE_UPDATE: true
+      DATABASE_SAVE_DATA_CONTACTS: true
+      DATABASE_SAVE_DATA_CHATS: true
+
+      # Redis
+      CACHE_REDIS_ENABLED: true
+      CACHE_REDIS_URI: redis://redis:6379
+      CACHE_REDIS_PREFIX_KEY: evolution
+      CACHE_LOCAL_ENABLED: false
+
+      # RabbitMQ
+      RABBITMQ_ENABLED: true
+      RABBITMQ_URI: ${EVOLUTION_RABBITMQ_URL:-amqp://omnichannel:omnichannel@rabbitmq:5672}
+      RABBITMQ_EXCHANGE_NAME: evolution_exchange
+      RABBITMQ_GLOBAL_ENABLED: true
+      RABBITMQ_EVENTS_APPLICATION_STARTUP: false
+      RABBITMQ_EVENTS_INSTANCE_CREATE: false
+      RABBITMQ_EVENTS_INSTANCE_DELETE: false
+      RABBITMQ_EVENTS_QRCODE_UPDATED: true
+      RABBITMQ_EVENTS_MESSAGES_SET: false
+      RABBITMQ_EVENTS_MESSAGES_UPSERT: true
+      RABBITMQ_EVENTS_MESSAGES_UPDATE: true
+      RABBITMQ_EVENTS_MESSAGES_DELETE: true
+      RABBITMQ_EVENTS_SEND_MESSAGE: true
+      RABBITMQ_EVENTS_CONTACTS_SET: false
+      RABBITMQ_EVENTS_CONTACTS_UPSERT: true
+      RABBITMQ_EVENTS_CONTACTS_UPDATE: false
+      RABBITMQ_EVENTS_PRESENCE_UPDATE: true
+      RABBITMQ_EVENTS_CHATS_SET: false
+      RABBITMQ_EVENTS_CHATS_UPSERT: false
+      RABBITMQ_EVENTS_CHATS_UPDATE: false
+      RABBITMQ_EVENTS_CHATS_DELETE: false
+      RABBITMQ_EVENTS_CONNECTION_UPDATE: true
+      RABBITMQ_EVENTS_GROUPS_UPSERT: false
+      RABBITMQ_EVENTS_GROUPS_UPDATE: false
+      RABBITMQ_EVENTS_GROUP_PARTICIPANTS_UPDATE: false
+      RABBITMQ_EVENTS_CALL: false
+      RABBITMQ_EVENTS_TYPEBOT_START: false
+      RABBITMQ_EVENTS_TYPEBOT_CHANGE_STATUS: false
+
+      # QR Code
+      QRCODE_LIMIT: 6
+      QRCODE_COLOR: '#000000'
+
+      # Logs
+      LOG_LEVEL: ERROR,WARN,DEBUG,INFO,LOG,VERBOSE
+      LOG_COLOR: true
+
+      # WebSocket
+      WEBSOCKET_ENABLED: false
+
+      # Instance config
+      DEL_INSTANCE: false
+      CONFIG_SESSION_PHONE_CLIENT: Telemovvi
+      CONFIG_SESSION_PHONE_NAME: Chrome
+      CONFIG_SESSION_PHONE_VERSION: 2.3000.1023204200
+    ports:
+      - '8080:8080'
+    networks:
+      - omnichannel
+    depends_on:
+      postgres-evolution:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+networks:
+  omnichannel:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  postgres_evolution_data:
+  rabbitmq_data:
+  redis_data:
+  media_data:

@@ -1,0 +1,27 @@
+FROM node:22-alpine
+
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+RUN apk add --no-cache su-exec
+
+WORKDIR /app
+
+# Copiar apenas arquivos de configuração para cache de camadas
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages/core/package.json ./packages/core/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY apps/web/package.json ./apps/web/
+
+# Instalar dependências (NODE_ENV=development para incluir devDeps)
+ENV NODE_ENV=development
+RUN pnpm install --frozen-lockfile --shamefully-hoist
+
+# O código será montado via volume
+# Comando padrão será executado via docker-compose
+
+WORKDIR /app/apps/web
+
+ENTRYPOINT ["sh", "/app/docker-entrypoint.dev.sh"]
+
+CMD ["pnpm", "dev"]

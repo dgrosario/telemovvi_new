@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "idx_conversations_unique_whatsapp_group" ON "conversations" USING btree ("workspace_id","channel","group_jid") WHERE "conversations"."conversation_type" = 'whatsapp-group';

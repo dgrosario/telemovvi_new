@@ -1,0 +1,2 @@
+ALTER TABLE "processed_messages" DROP CONSTRAINT "processed_messages_pkey";--> statement-breakpoint
+ALTER TABLE "processed_messages" ADD CONSTRAINT "processed_messages_message_id_instance_name_pk" PRIMARY KEY("message_id","instance_name");

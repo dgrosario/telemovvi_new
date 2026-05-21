@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "idx_conversations_unique_open_contact" ON "conversations" USING btree ("channel","contact") WHERE "conversations"."status" IN ('open', 'waiting') AND "conversations"."contact" IS NOT NULL;

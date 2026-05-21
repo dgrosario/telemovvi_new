@@ -1,0 +1,1 @@
+ALTER TABLE "messages" ADD COLUMN "remote_jid" varchar(255);

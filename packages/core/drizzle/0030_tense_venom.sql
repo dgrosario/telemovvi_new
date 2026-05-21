@@ -1,0 +1,2 @@
+ALTER TABLE "partner_contacts" DROP CONSTRAINT "partner_contacts_value_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "unique_partner_contact_value" ON "partner_contacts" USING btree ("partner_id","value");

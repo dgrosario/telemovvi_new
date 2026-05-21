@@ -1,0 +1,1 @@
+ALTER TABLE "conversations" ADD COLUMN "flow_completed_at" timestamp;

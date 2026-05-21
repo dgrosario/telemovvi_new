@@ -1,0 +1,1 @@
+ALTER TABLE "campaigns" ADD COLUMN "filter_label_ids" uuid[] DEFAULT '{}';

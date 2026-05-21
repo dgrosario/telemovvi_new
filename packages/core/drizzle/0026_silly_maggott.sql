@@ -1,0 +1,1 @@
+ALTER TABLE "partners" ADD COLUMN "is_name_custom" boolean DEFAULT false NOT NULL;
