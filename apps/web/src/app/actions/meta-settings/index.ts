@@ -2,18 +2,31 @@
 import * as z from "zod";
 import { securityProcedure } from "../procedure";
 import { gatewayHttpClient } from "@/lib/gateway/http-client";
-import type { MetaChannelType, MetaSaveSettingsPayload } from "@/lib/gateway-client";
+import type { MetaAppSetting, MetaChannelType, MetaSaveSettingsPayload } from "@/lib/gateway-client";
 
 const metaSettingsProcedure = securityProcedure(["manage:meta-settings"]);
 
-const metaChannelTypeSchema = z.enum(["whatsapp", "instagram", "messenger"]);
+const metaChannelTypeSchema = z.enum([
+  "whatsapp",
+  "instagram",
+  "messenger",
+  "evolution",
+]);
 
 const saveSettingsInputSchema = z.object({
   channelType: metaChannelTypeSchema,
   appId: z.string().min(1, "App ID is required"),
-  appSecret: z.string().min(32, "App Secret must be at least 32 characters"),
+  appSecret: z.string().min(1, "App Secret is required"),
   configId: z.string().optional(),
 }).superRefine((val, ctx) => {
+  if (val.channelType !== "evolution" && val.appSecret.length < 32) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "App Secret must be at least 32 characters",
+      path: ["appSecret"],
+    });
+  }
+
   if (val.channelType !== "instagram" && (!val.configId || val.configId.trim() === "")) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -97,4 +110,37 @@ export const setMetaSettingsActive = metaSettingsProcedure
     }
 
     return { success: true };
+  });
+
+
+export const testMetaSettingsConnection = metaSettingsProcedure
+  .input(
+    z.object({
+      channelType: metaChannelTypeSchema,
+    })
+  )
+  .handler(async ({ input }) => {
+    const response = await gatewayHttpClient.getMetaSettings(
+      input.channelType as MetaChannelType,
+      true
+    );
+
+    if (!response.success || !response.data) {
+      return { online: false, message: "Configuração não encontrada" };
+    }
+
+    const setting = response.data as MetaAppSetting & { appSecret?: string };
+    const hasAppId = !!setting.appId?.trim();
+    const hasSecret = !!setting.appSecret?.trim();
+    const hasConfig =
+      input.channelType === "instagram" || !!setting.configId?.trim();
+
+    const online = hasAppId && hasSecret && hasConfig && !!setting.isActive;
+
+    return {
+      online,
+      message: online
+        ? "Conexão online"
+        : "Configuração incompleta ou inativa",
+    };
   });

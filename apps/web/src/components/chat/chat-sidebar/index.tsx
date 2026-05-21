@@ -20,7 +20,7 @@ import { getSearchTypeLabel } from "@/hooks/use-smart-search";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import { META_CHANNEL_TYPES } from "@omnichannel/core/domain/entities/channel";
 import { CircularProgress } from "@mui/material";
-import { Inbox, Clock, CheckCircle, AlertTriangle, MessageSquare, Plus } from "lucide-react";
+import { Inbox, MessageSquare, Plus, Search, X } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -50,7 +50,6 @@ import { useCrossChannelIndicators } from "@/hooks/use-cross-channel-indicators"
 import { PERMISSION_MAPPINGS } from "@/lib/permissions-map";
 import {
   normalizeConversationType,
-  shouldShowStatusFilters,
   toConversationTypeFilter,
 } from "@/lib/chat-conversation-type";
 
@@ -85,6 +84,7 @@ export const ChatSidebar: React.FC = () => {
     React.useState<HTMLElement | null>(null);
   const [userAnchorEl, setUserAnchorEl] =
     React.useState<HTMLElement | null>(null);
+  const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
   const store = useChat();
   const { messageToForward, clearMessageToForward } = useForwardMessage();
   const { hasPermission: canListAllConversations } = usePermissionCheck(["list:all-conversations"]);
@@ -238,43 +238,7 @@ export const ChatSidebar: React.FC = () => {
     [fetchNextPage, hasNextPage, isFetchingNextPage, isInternalMode]
   );
 
-  const hasMetaChannels = useMemo(
-    () =>
-      store.channels.some((ch) =>
-        META_CHANNEL_TYPES.includes(ch.type as typeof META_CHANNEL_TYPES[number])
-      ),
-    [store.channels]
-  );
 
-  const filtersList = useMemo(
-    () => [
-      {
-        title: "Abertas",
-        value: "open" as const,
-        count: counters?.open || 0,
-      },
-      {
-        title: "Pendentes",
-        value: "waiting" as const,
-        count: counters?.waiting || 0,
-      },
-      {
-        title: "Concluídas",
-        value: "closed" as const,
-        count: counters?.closed || 0,
-      },
-      ...(hasMetaChannels
-        ? [
-            {
-              title: "Expiradas",
-              value: "expired" as const,
-              count: counters?.expired || 0,
-            },
-          ]
-        : []),
-    ],
-    [counters, hasMetaChannels]
-  );
 
   const handleConversationTypeChange = useCallback(
     (type: "contacts" | "groups" | "internal") => {
@@ -500,6 +464,18 @@ export const ChatSidebar: React.FC = () => {
 
   const hasSectorFilter = filters.sectorFilters.length > 0;
   const hasUserFilter = filters.userFilters.length > 0;
+  const waitingCount = counters?.waiting ?? 0;
+  const openCount = counters?.open ?? 0;
+  const closedCount = counters?.closed ?? 0;
+  const groupsCount = normalizedConversationType === "groups" ? conversations.length : 0;
+  const totalUnread =
+    (unreadByStatus.open ?? 0) +
+    (unreadByStatus.waiting ?? 0) +
+    (unreadByStatus.closed ?? 0) +
+    (unreadByStatus.expired ?? 0);
+  const activeSectorCount = filters.sectorFilters.length;
+  const waitingUnread = unreadByStatus.waiting ?? 0;
+  const openUnread = unreadByStatus.open ?? 0;
 
   const showSkeleton = isLoading && conversations.length === 0;
 
@@ -511,7 +487,7 @@ export const ChatSidebar: React.FC = () => {
       className={`
         bg-white border-r flex-col w-full h-full
         ${hasOpenConversation ? "hidden" : "flex"}
-        md:flex md:min-w-[460px] md:max-w-[460px] md:flex-1
+        md:flex md:w-full lg:min-w-[420px] lg:max-w-[460px] lg:flex-1
       `}
     >
       <SidebarHeader className="gap-3.5 pt-4 pb-0 px-0 shrink-0">
@@ -555,41 +531,69 @@ export const ChatSidebar: React.FC = () => {
             </p>
           </div>
         )}
-        <div className="flex gap-1 justify-center items-center px-2 md:px-4 pb-2">
-          {/* User menu - visible only on mobile */}
+        <div className="flex gap-1 items-center px-2 md:px-4 pb-2">
           <div className="md:hidden">
             <ChatUserMenu user={store.user ?? undefined} />
           </div>
-          <CustomTextField
-            placeholder="Buscar por número, @instagram ou nome"
-            name="search"
-            variant="outlined"
-            fullWidth
-            size="small"
-            value={query}
-            slotProps={{
-              input: {
-                className: "!pr-0.5",
-                endAdornment: (
-                  <>
-                    <FilterConversationsDrawer
-                      channelsList={store.channels}
-                      sectorsList={store.sectors}
-                      usersList={store.users}
-                      canFilterByAttendant={canFilterByAttendant}
-                    />
-                    <ModalNewConversation />
-                  </>
-                ),
-              },
-            }}
-            onChange={(e) => {
-              setQuery(e.target.value, {
-                limitUrlUpdates:
-                  e.target.value === "" ? undefined : debounce(500),
-              });
-            }}
-          />
+
+          {isSearchExpanded ? (
+            <CustomTextField
+              placeholder="Buscar por número, @instagram ou nome"
+              name="search"
+              variant="outlined"
+              fullWidth
+              autoFocus
+              size="small"
+              value={query}
+              slotProps={{
+                input: {
+                  className: "!pr-0.5",
+                  endAdornment: (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSearchExpanded(false);
+                          setQuery("");
+                        }}
+                        className="mr-1 rounded-md p-1 text-gray-500 hover:bg-gray-100"
+                        aria-label="Fechar busca"
+                      >
+                        <X className="size-4" />
+                      </button>
+                      <FilterConversationsDrawer
+                        channelsList={store.channels}
+                        sectorsList={store.sectors}
+                        usersList={store.users}
+                        canFilterByAttendant={canFilterByAttendant}
+                      />
+                      <ModalNewConversation />
+                    </>
+                  ),
+                },
+              }}
+              onChange={(e) => {
+                setQuery(e.target.value, {
+                  limitUrlUpdates:
+                    e.target.value === "" ? undefined : debounce(500),
+                });
+              }}
+            />
+          ) : (
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setIsSearchExpanded(true)}
+                className="rounded-lg border p-2 text-gray-600 hover:bg-gray-100"
+                aria-label="Abrir busca"
+              >
+                <Search className="size-4" />
+              </button>
+              <div className="rounded-lg border p-0.5">
+                <ModalNewConversation />
+              </div>
+            </div>
+          )}
         </div>
 
         <ActiveFiltersDisplay
@@ -637,83 +641,130 @@ export const ChatSidebar: React.FC = () => {
           />
         )}
 
-        {shouldShowStatusFilters(normalizedConversationType) && (
-        <div className="flex items-center gap-1 px-2 md:px-4 pt-2 mb-3 overflow-x-auto" role="group" aria-label="filtrar conversas por status">
-          {filtersList.map((f) => {
-            const isSelected = statusFilters.includes(f.value);
-            const unreadCount = unreadByStatus[f.value];
-
-            const icons: Record<string, React.ReactNode> = {
-              open: <Inbox className="size-3.5" />,
-              waiting: <Clock className="size-3.5" />,
-              closed: <CheckCircle className="size-3.5" />,
-              expired: <AlertTriangle className="size-3.5" />,
-              internal: <MessageSquare className="size-3.5" />,
-            };
-
-            const shortLabels: Record<string, string> = {
-              open: "Abert.",
-              waiting: "Pend.",
-              closed: "Concl.",
-              expired: "Expir.",
-              internal: "Inter.",
-            };
-
-            const selectedStyles: Record<string, string> = {
-              open: "bg-blue-100 text-blue-600",
-              waiting: "bg-amber-100 text-amber-600",
-              closed: "bg-green-100 text-green-600",
-              expired: "bg-red-100 text-red-600",
-              internal: "bg-purple-100 text-purple-600",
-            };
-
-            const unselectedStyles: Record<string, string> = {
-              open: "text-blue-500 hover:bg-blue-50",
-              waiting: "text-amber-500 hover:bg-amber-50",
-              closed: "text-green-500 hover:bg-green-50",
-              expired: "text-red-500 hover:bg-red-50",
-              internal: "text-purple-500 hover:bg-purple-50",
-            };
-
-            return (
-              <Tooltip key={f.value}>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      startTransition(() => {
-                        setStatusFilters([f.value]);
-                      });
-                    }}
-                    aria-label={`${f.title} (${f.count})`}
-                    aria-pressed={isSelected}
-                    className={`
-                      relative flex items-center gap-1 px-2 py-1.5 rounded-lg
-                      text-xs font-medium transition-all cursor-pointer
-                      ${isSelected
-                        ? selectedStyles[f.value]
-                        : unselectedStyles[f.value]
-                      }
-                    `}
-                  >
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1 px-1 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full min-w-[16px] text-center leading-none">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
-                    )}
-                    {icons[f.value]}
-                    <span>{shortLabels[f.value]}</span>
-                    <span className="opacity-60">{f.count}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" sideOffset={4}>
-                  {f.title}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+        <div className="px-2 md:px-4 pb-1">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-white p-1.5">
+            <button
+              type="button"
+              onClick={() => setStatusFilters(["open"])}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("open")
+                  ? "bg-emerald-100 text-emerald-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Abertos</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {openCount}
+                </span>
+                {totalUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {totalUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleConversationTypeChange("groups")}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                normalizedConversationType === "groups"
+                  ? "bg-blue-100 text-blue-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Grupos</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {groupsCount}
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilters(["closed"])}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("closed")
+                  ? "bg-orange-100 text-orange-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Finaliz.</span>
+                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] leading-none">
+                  {closedCount}
+                </span>
+              </span>
+            </button>
+          </div>
         </div>
-        )}
+
+        <div className="px-2 md:px-4 pt-0">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-gray-50 p-1.5">
+            <button
+              type="button"
+              onClick={() => setShowAll(false)}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                !showAll ? "bg-blue-100 text-blue-700 shadow-sm" : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Meus</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {openCount}
+                </span>
+                {openUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {openUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilters(["waiting"]);
+                setWaitingStatus("client");
+              }}
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                statusFilters.includes("waiting")
+                  ? "bg-amber-100 text-amber-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Em espera</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {waitingCount}
+                </span>
+                {waitingUnread > 0 && (
+                  <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                    {waitingUnread}
+                  </span>
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={(event) =>
+                setSectorAnchorEl(event.currentTarget as HTMLElement)
+              }
+              className={`rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                filters.sectorFilters.length > 0
+                  ? "bg-orange-100 text-orange-700 shadow-sm"
+                  : "text-gray-600"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <span>Setor</span>
+                <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none">
+                  {activeSectorCount}
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+
       </SidebarHeader>
       <SidebarContent
         className="flex-1 overflow-y-auto overflow-x-hidden"

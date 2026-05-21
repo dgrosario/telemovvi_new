@@ -273,7 +273,7 @@ export function AppSidebar(
                     }}
                   />
                   {!verticalNavOptions.isCollapsed && (
-                    <span>Configurações Meta</span>
+                    <span>Configurações</span>
                   )}
                 </Link>
               </div>

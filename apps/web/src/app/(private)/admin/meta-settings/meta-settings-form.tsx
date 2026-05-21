@@ -6,6 +6,7 @@ import {
   getMetaSettings,
   saveMetaSettings,
   setMetaSettingsActive,
+  testMetaSettingsConnection,
 } from "@/app/actions/meta-settings";
 import { MetaAppSetting, MetaChannelType } from "@/lib/gateway-client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const CHANNEL_LABELS: Record<MetaChannelType, string> = {
   whatsapp: "WhatsApp Business",
   instagram: "Instagram Business",
   messenger: "Facebook Messenger",
+  evolution: "Evolution API",
 };
 
 export function MetaSettingsForm({
@@ -31,16 +33,20 @@ export function MetaSettingsForm({
   initialSetting,
   onSettingSaved,
 }: MetaSettingsFormProps) {
+  const isEvolution = channelType === "evolution";
   const [appId, setAppId] = useState("");
   const [appSecret, setAppSecret] = useState("");
   const [configId, setConfigId] = useState("");
   const [isActive, setIsActive] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<"idle" | "online" | "offline">("idle");
+  const [connectionMessage, setConnectionMessage] = useState("");
 
   const saveAction = useServerAction(saveMetaSettings);
   const setActiveAction = useServerAction(setMetaSettingsActive);
   const getSettingsAction = useServerAction(getMetaSettings);
+  const testConnectionAction = useServerAction(testMetaSettingsConnection);
 
   useEffect(() => {
     if (initialSetting) {
@@ -121,6 +127,22 @@ export function MetaSettingsForm({
     }
   };
 
+  const handleTestConnection = async () => {
+    const [result, error] = await testConnectionAction.execute({ channelType });
+
+    if (error) {
+      setConnectionStatus("offline");
+      setConnectionMessage(error.message || "Falha ao testar conexão");
+      toast.error("Falha ao testar conexão");
+      return;
+    }
+
+    const isOnline = !!result?.online;
+    setConnectionStatus(isOnline ? "online" : "offline");
+    setConnectionMessage(result?.message || (isOnline ? "Conexão online" : "Sem conexão"));
+    toast[isOnline ? "success" : "warning"](result?.message || (isOnline ? "Conexão online" : "Sem conexão"));
+  };
+
   const handleToggleActive = async () => {
     if (!initialSetting) {
       toast.error("Salve as configurações antes de ativar");
@@ -152,8 +174,9 @@ export function MetaSettingsForm({
             {CHANNEL_LABELS[channelType]}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Configure as credenciais do aplicativo Meta para{" "}
-            {CHANNEL_LABELS[channelType]}
+            {isEvolution
+              ? "Configure as credenciais da Evolution para integração no workspace"
+              : `Configure as credenciais do aplicativo Meta para ${CHANNEL_LABELS[channelType]}`}
           </p>
         </div>
 
@@ -174,31 +197,43 @@ export function MetaSettingsForm({
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="appId">App ID *</Label>
+          <Label htmlFor="appId">{isEvolution ? "URL da API *" : "App ID *"}</Label>
           <Input
             id="appId"
             value={appId}
             onChange={(e) => setAppId(e.target.value)}
-            placeholder="Ex: 579228267872440"
+            placeholder={
+              isEvolution
+                ? "Ex: https://evolution.seudominio.com"
+                : "Ex: 579228267872440"
+            }
             required
           />
           <p className="text-xs text-gray-500">
-            ID do aplicativo no Meta Developers
+            {isEvolution
+              ? "URL base usada para comunicação com a Evolution API"
+              : "ID do aplicativo no Meta Developers"}
           </p>
         </div>
 
         {channelType !== "instagram" && (
           <div className="space-y-2">
-            <Label htmlFor="configId">Config ID *</Label>
+            <Label htmlFor="configId">
+              {isEvolution ? "Nome da Instância *" : "Config ID *"}
+            </Label>
             <Input
               id="configId"
               value={configId}
               onChange={(e) => setConfigId(e.target.value)}
-              placeholder="Ex: 1378912180505580"
+              placeholder={
+                isEvolution ? "Ex: atendimento-principal" : "Ex: 1378912180505580"
+              }
               required
             />
             <p className="text-xs text-gray-500">
-              ID da configuração de Embedded Signup
+              {isEvolution
+                ? "Identificador da instância Evolution que será usada no workspace"
+                : "ID da configuração de Embedded Signup"}
             </p>
           </div>
         )}
@@ -206,7 +241,9 @@ export function MetaSettingsForm({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="appSecret">App Secret {!initialSetting && "*"}</Label>
+          <Label htmlFor="appSecret">
+            {isEvolution ? "Token / API Key" : "App Secret"} {!initialSetting && "*"}
+          </Label>
           {initialSetting && !appSecret && (
             <Button
               type="button"
@@ -228,7 +265,9 @@ export function MetaSettingsForm({
             placeholder={
               initialSetting
                 ? "Deixe em branco para manter o atual"
-                : "App Secret do aplicativo"
+                : isEvolution
+                  ? "Token de autenticação da Evolution API"
+                  : "App Secret do aplicativo"
             }
             required={!initialSetting}
           />
@@ -242,15 +281,30 @@ export function MetaSettingsForm({
           </Button>
         </div>
         <p className="text-xs text-gray-500">
-          Secret do aplicativo no Meta Developers (mínimo 32 caracteres)
+          {isEvolution
+            ? "Token usado para autenticar chamadas na Evolution API"
+            : "Secret do aplicativo no Meta Developers (mínimo 32 caracteres)"}
         </p>
       </div>
 
-      <div className="flex justify-end pt-4 border-t border-gray-100">
-        <Button type="submit" disabled={saveAction.isPending}>
-          {saveAction.isPending ? "Salvando..." : "Salvar Configurações"}
-        </Button>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pt-4 border-t border-gray-100">
+        <div className="text-sm">
+          {connectionStatus !== "idle" && (
+            <span className={connectionStatus === "online" ? "text-emerald-600" : "text-red-600"}>
+              {connectionStatus === "online" ? "● Online" : "● Offline"} {connectionMessage ? `- ${connectionMessage}` : ""}
+            </span>
+          )}
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button type="button" variant="outline" onClick={handleTestConnection} disabled={testConnectionAction.isPending}>
+            {testConnectionAction.isPending ? "Testando..." : "Testar conexão"}
+          </Button>
+          <Button type="submit" disabled={saveAction.isPending}>
+            {saveAction.isPending ? "Salvando..." : "Salvar Configurações"}
+          </Button>
+        </div>
       </div>
+
     </form>
   );
 }
