@@ -523,7 +523,7 @@ export const ChatSidebar: React.FC = () => {
       className={`
         bg-white border-r flex-col w-full h-full
         ${hasOpenConversation ? "hidden" : "flex"}
-        md:flex md:w-full lg:min-w-[420px] lg:max-w-[460px] lg:flex-1
+        md:flex md:w-[390px] md:min-w-[360px] md:max-w-[430px] md:flex-none lg:w-[430px]
       `}
     >
       <SidebarHeader className="gap-3.5 pt-4 pb-0 px-0 shrink-0">
@@ -861,7 +861,7 @@ export const ChatSidebar: React.FC = () => {
 
           <SidebarGroupContent
             data-hidden={showSkeleton}
-            className="bg-white"
+            className="bg-white pb-2"
           >
             {conversations.length === 0 && !isLoading && !isFetching ? (
               <div className="flex flex-col items-center justify-center py-16 px-4 text-center">

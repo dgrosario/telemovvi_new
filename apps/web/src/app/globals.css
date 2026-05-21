@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 @plugin "tailwindcss-motion";
 @plugin 'tailwind-scrollbar';
@@ -308,6 +309,11 @@
   }
   * {
     @apply border-border;
+  }
+
+  html,
+  body {
+    font-family: "Inter", system-ui, sans-serif;
   }
 
   *.required::after {
